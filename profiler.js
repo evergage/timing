@@ -39,7 +39,7 @@ __Profiler.prototype.eventsOrder = [
 ];
 
 __Profiler.prototype.customRequestMap = [
-  {name : "Evergage Beacon", match : /\/evergage(small)?.(min|src)\.js$/ },
+  {name : "Evergage Beacon", match : /\/evergage(Small)?.(min|src)\.js$/ },
   {name : "Evergage Action", match : /\/twreceiver\?.*\&action\=([^&]*)/ },
   {name : "Evergage Request", match : /\/twreceiver\?.*/ },
   {name : "Evergage Ping", match : /\/pr\?/ },
