@@ -362,7 +362,7 @@ __Profiler.prototype._drawChart = function(canvas) {
     var evt = this.eventsOrder[i];
 
     if (!this.timingData.hasOwnProperty(evt)) {
-``      continue;
+      continue;
     }
 
     var item = this.timingData[evt];
