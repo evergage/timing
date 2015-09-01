@@ -5,10 +5,10 @@
  */
 function __Profiler() {
   this.totalTime = 0;
-  
+
   this.barHeight = 18;
   this.timeLabelWidth = 50;
-  this.nameLabelWidth = 220;
+  this.nameLabelWidth = 250;
   this.textSpace = this.timeLabelWidth + this.nameLabelWidth;
   this.spacing = 1.2;
   this.unit = 1;
@@ -40,7 +40,8 @@ __Profiler.prototype.eventsOrder = [
 
 __Profiler.prototype.customRequestMap = [
   {name : "Evergage Beacon", match : /\/evergage(small)?.(min|src)\.js$/ },
-  {name : "Evergage Request", match : /\/twreceiver\?/ },
+  {name : "Evergage Action", match : /\/twreceiver\?.*\&action\=([^&]*)/ },
+  {name : "Evergage Request", match : /\/twreceiver\?.*/ },
   {name : "Evergage Ping", match : /\/pr\?/ },
   {name : "Evergage Message Stat", match : /\/msreceiver\?/ }
 ];
@@ -49,19 +50,19 @@ __Profiler.prototype.customRequestMap = [
  * CSS strings for various parts of the chart
  */
 __Profiler.prototype.cssReset = 'font-size:12px;line-height:1em;z-index:10000000;text-align:left;' +
-  'font-family:Calibri,\'Lucida Grande\',Arial,sans-serif;text-shadow:none;box-' +
-  'shadow:none;display:inline-block;color:#444;font-' +
-  'weight:normal;border:none;margin:0;padding:0;background:none;';
+    'font-family:Calibri,\'Lucida Grande\',Arial,sans-serif;text-shadow:none;box-' +
+    'shadow:none;display:inline-block;color:#444;font-' +
+    'weight:normal;border:none;margin:0;padding:0;background:none;';
 
 __Profiler.prototype.elementCss = 'position:fixed;margin:0 auto;top:' +
-  '0;left:0;right:0;border-bottom:solid 1px #EFCEA1;box-shadow:0 2px 5px rgba(0,0,0,.1);';
+    '0;left:0;right:0;border-bottom:solid 1px #EFCEA1;box-shadow:0 2px 5px rgba(0,0,0,.1);';
 
 __Profiler.prototype.containerCss = 'background:#FFFDF2;background:rgba(255,253,242,.99);padding:20px;display:block;';
 
 __Profiler.prototype.headerCss = 'font-size:16px;font-weight:normal;margin:0 0 1em 0;width:auto';
 
 __Profiler.prototype.buttonCss = 'float:right;background:none;border-radius:5px;padding:3px 10px' +
-  ';font-size:12px;line-height:130%;width:auto;margin:-7px -10px 0 0;cursor:pointer';
+    ';font-size:12px;line-height:130%;width:auto;margin:-7px -10px 0 0;cursor:pointer';
 
 __Profiler.prototype.infoLinkCss = 'color:#1D85B8;margin:1em 0 0 0;';
 
@@ -96,27 +97,27 @@ __Profiler.prototype._setUnit = function(canvas) {
  */
 __Profiler.prototype._getSections = function() {
   return Array.prototype.indexOf ? [{
-      name: 'network',
-      color: [224, 84, 63],
-      firstEventIndex: this.eventsOrder.indexOf('navigationStart'),
-      lastEventIndex: this.eventsOrder.indexOf('connectEnd'),
-      startTime: 0,
-      endTime: 0
-    }, {
-      name: 'server',
-      color: [255, 188, 0],
-      firstEventIndex: this.eventsOrder.indexOf('requestStart'),
-      lastEventIndex: this.eventsOrder.indexOf('responseEnd'),
-      startTime: 0,
-      endTime: 0
-    }, {
-      name: 'browser',
-      color: [16, 173, 171],
-      firstEventIndex: this.eventsOrder.indexOf('unloadEventStart'),
-      lastEventIndex: this.eventsOrder.indexOf('loadEventEnd'),
-      startTime: 0,
-      endTime: 0
-    }, {
+    name: 'network',
+    color: [224, 84, 63],
+    firstEventIndex: this.eventsOrder.indexOf('navigationStart'),
+    lastEventIndex: this.eventsOrder.indexOf('connectEnd'),
+    startTime: 0,
+    endTime: 0
+  }, {
+    name: 'server',
+    color: [255, 188, 0],
+    firstEventIndex: this.eventsOrder.indexOf('requestStart'),
+    lastEventIndex: this.eventsOrder.indexOf('responseEnd'),
+    startTime: 0,
+    endTime: 0
+  }, {
+    name: 'browser',
+    color: [16, 173, 171],
+    firstEventIndex: this.eventsOrder.indexOf('unloadEventStart'),
+    lastEventIndex: this.eventsOrder.indexOf('loadEventEnd'),
+    startTime: 0,
+    endTime: 0
+  }, {
     name: 'custom',
     color: [0, 149, 218],
     firstEventIndex: this.eventsOrder.indexOf('custom'),
@@ -146,7 +147,7 @@ __Profiler.prototype._createContainer = function() {
     button.onclick = null;
     container.parentNode.removeChild(container);
   }; // DOM level 0 used to avoid implementing this twice for IE & the rest
-  
+
   container.style.cssText = this.cssReset + this.containerCss;
 
   if (!this.customElement) {
@@ -166,16 +167,16 @@ __Profiler.prototype._createHeader = function() {
   var c = document.createElement('div');
   var h = document.createElement('h1');
   var sectionStr = '/ ';
-    
+
   for(var i = 0, l = this.sections.length; i < l; i++) {
     sectionStr += '<span style="color:rgb(' + this.sections[i].color.join(',') + ')">' + this.sections[i].name + '</span> / ';
-  }       
-        
+  }
+
   h.innerHTML = 'Page Load Time Breakdown ' + sectionStr;
-  h.style.cssText = this.cssReset + this.headerCss; 
-    
+  h.style.cssText = this.cssReset + this.headerCss;
+
   c.appendChild(h);
-    
+
   return c;
 }
 
@@ -188,7 +189,7 @@ __Profiler.prototype._createCloseButton = function() {
 
   b.innerHTML = 'close this box &times;';
   b.style.cssText = this.cssReset + this.buttonCss;
-  
+
   return b;
 }
 
@@ -222,17 +223,17 @@ __Profiler.prototype._createNotSupportedInfo = function() {
  */
 __Profiler.prototype._createChart = function() {
   var chartContainer = document.createElement('div');
-    
+
   var canvas = document.createElement('canvas');
   canvas.width = this.container.clientWidth - this.containerPadding * 2;
 
   var infoLink = this._createInfoLink();
 
   this._drawChart(canvas);
-    
+
   chartContainer.appendChild(canvas);
   chartContainer.appendChild(infoLink);
-    
+
   return chartContainer;
 }
 
@@ -246,7 +247,7 @@ __Profiler.prototype._createChart = function() {
  */
 __Profiler.prototype._prepareDraw = function(canvas, mode, eventData) {
   var sectionData = this.sections[eventData.sectionIndex];
-  
+
   var barOptions = {
     color : sectionData.color,
     sectionTimeBounds : [sectionData.startTime, sectionData.endTime],
@@ -286,7 +287,7 @@ __Profiler.prototype._drawBar = function(mode, canvas, barWidth, options) {
   var sectionStop = options.sectionTimeBounds[1];
   var nameLabel = options.label;
   var context = canvas.getContext('2d');
-    
+
   if (mode === 'block') {
     start = options.eventTimeBounds[0];
     stop = options.eventTimeBounds[1];
@@ -300,14 +301,14 @@ __Profiler.prototype._drawBar = function(mode, canvas, barWidth, options) {
     timeLabel = start;
   }
   timeLabel += 'ms';
-    
+
   metrics = context.measureText(timeLabel);
   if(metrics.width > this.timeLabelWidth) {
     this.timeLabelWidth = metrics.width + 10;
     this.textSpace = this.timeLabelWidth + this.nameLabelWidth;
     this._setUnit(canvas);
   }
-    
+
   return function(context) {
     if(mode === 'block') {
       width = Math.round((stop - start) * this.unit);
@@ -315,7 +316,7 @@ __Profiler.prototype._drawBar = function(mode, canvas, barWidth, options) {
     } else {
       width = 1;
     }
-      
+
     // row background
     context.strokeStyle = 'rgba(' + color[0] + ',' + color[1] + ',' + color[2] + ',.3)';
     context.lineWidth = 1;
@@ -325,16 +326,16 @@ __Profiler.prototype._drawBar = function(mode, canvas, barWidth, options) {
     context.fillRect(0, 0, barWidth - this.textSpace, this.barHeight);
     // context.strokeRect(.5, .5, Math.round(barWidth - this.textSpace -1), Math.round(this.barHeight));
 
-      
+
     // section bar
     context.shadowColor = 'white';
     context.fillStyle = 'rgba(' + color[0] + ',' + color[1] + ',' + color[2] + ',.2)';
     context.fillRect(Math.round(this.unit * sectionStart), 2, Math.round(this.unit * (sectionStop - sectionStart)), this.barHeight - 4);
-      
+
     // event marker
     context.fillStyle = 'rgb(' + color[0] + ',' + color[1] + ',' + color[2] + ')';
     context.fillRect(Math.round(this.unit * start), 2, width, this.barHeight - 4);
-      
+
     // label
     context.fillText(timeLabel, barWidth - this.textSpace + 10, 2 * this.barHeight / 3);
     context.fillText(nameLabel, barWidth - this.textSpace + this.timeLabelWidth + 15, 2 * this.barHeight / 3);
@@ -352,7 +353,7 @@ __Profiler.prototype._drawChart = function(canvas) {
   var drawFns = [];
 
   var context = canvas.getContext('2d');
-  
+
   // needs to be set here for proper text measurement...
   context.font = this.fontStyle;
 
@@ -369,12 +370,12 @@ __Profiler.prototype._drawChart = function(canvas) {
     var startIndex = evt.indexOf('Start');
     var isBlockStart = startIndex > -1;
     var hasBlockEnd = false;
-    
+
     if (isBlockStart) {
       eventName = evt.substr(0, startIndex);
       hasBlockEnd = this.eventsOrder.indexOf(eventName + 'End') > -1;
     }
-    
+
     if (isBlockStart && hasBlockEnd) {
       item.label = eventName;
       item.timeEnd = this.timingData[eventName + 'End'].time;
@@ -395,7 +396,7 @@ __Profiler.prototype._drawChart = function(canvas) {
 
   // setting canvas height resets font, has to be re-set
   context.font = this.fontStyle;
-  
+
   var step = Math.round(this.barHeight * this.spacing);
 
   drawFns.forEach(function(draw) {
@@ -413,11 +414,11 @@ __Profiler.prototype._matchEventsWithSections = function() {
   var data = this.timingData;
 
   var sections = this.sections;
-  
+
   for (var i = 0, len = sections.length; i < len; i++) {
     var firstEventIndex = sections[i].firstEventIndex;
     var lastEventIndex = sections[i].lastEventIndex;
-      
+
     var sectionOrder = this.eventsOrder.slice(firstEventIndex, lastEventIndex + 1);
     var sectionEvents = sectionOrder.filter(function(el){
       return data.hasOwnProperty(el);
@@ -426,20 +427,20 @@ __Profiler.prototype._matchEventsWithSections = function() {
     sectionEvents.sort(function(a, b){
       return data[a].time - data[b].time;
     })
-    
+
     firstEventIndex = sectionEvents[0];
     lastEventIndex = sectionEvents[sectionEvents.length - 1];
     if (typeof firstEventIndex === "undefined") {
       continue;
     }
 
-    sections[i].startTime = data[firstEventIndex].time;    
-    sections[i].endTime = data[lastEventIndex].time;      
-      
+    sections[i].startTime = data[firstEventIndex].time;
+    sections[i].endTime = data[lastEventIndex].time;
+
     for(var j = 0, flen = sectionEvents.length; j < flen; j++) {
       var item = sectionEvents[j];
       if(data[item]) {
-        data[item].sectionIndex = i;      
+        data[item].sectionIndex = i;
       }
     }
   }
@@ -458,7 +459,7 @@ __Profiler.prototype._getData = function() {
   if (!window.performance) {
     return;
   }
-  
+
   var data = window.performance;
   var timingData = data.timing;
   var eventNames = this._getPerfObjKeys(timingData);
@@ -467,7 +468,7 @@ __Profiler.prototype._getData = function() {
   var startTime = timingData.navigationStart || 0;
   var eventTime = 0;
   var totalTime = 0;
-    
+
   for(var i = 0, l = eventNames.length; i < l; i++) {
     var evt = timingData[eventNames[i]];
 
@@ -496,6 +497,10 @@ __Profiler.prototype._getCustomEvents = function() {
       var perf = perfs[j];
 
       if (customRequestSetting.match.test(perf.name)) {
+        var name = customRequestSetting.name;
+        var groups = customRequestSetting.match.exec(perf.name)
+        if (groups.length >= 1 && typeof groups[1] != "undefined")
+          name += " (" + window.decodeURIComponent(groups[1]) + ")";
         var sections = this._getSections();
         if (typeof sections[3].startTime === "undefined") sections[3].startTime = perf.startTime;
         else
@@ -510,7 +515,7 @@ __Profiler.prototype._getCustomEvents = function() {
         var item = {
           time: Math.round(perf.startTime),
           sectionIndex: 3,
-          label: customRequestSetting.name,
+          label: name,
           timeEnd: Math.round(perf.responseEnd),
           custom: true
         };
@@ -545,7 +550,7 @@ __Profiler.prototype._init = function() {
   } else {
     content = this._createNotSupportedInfo();
   }
-   
+
   this.container.appendChild(content);
 }
 
@@ -574,3 +579,4 @@ __Profiler.prototype.init = function(element, timeout) {
     this._init();
   }
 }
+new __Profiler().init();
