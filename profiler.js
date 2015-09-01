@@ -39,7 +39,7 @@ __Profiler.prototype.eventsOrder = [
 ];
 
 __Profiler.prototype.customRequestMap = [
-  {name : "Evergage Beacon", match : /\/evergage(small)?.(min|src).js$/ },
+  {name : "Evergage Beacon", match : /\/evergage(small)?.(min|src)\.js$/ },
   {name : "Evergage Request", match : /\/twreceiver\?/ },
   {name : "Evergage Ping", match : /\/pr\?/ },
   {name : "Evergage Message Stat", match : /\/msreceiver\?/ }
@@ -133,7 +133,12 @@ __Profiler.prototype._getSections = function() {
  * @return {HTMLElement} container element
  */
 __Profiler.prototype._createContainer = function() {
+  var old = document.getElementById("profiler");
+  if (old) {
+    old.remove();
+  }
   var container = document.createElement('div');
+  container.id = "profiler";
   var header = this._createHeader();
   var button = this._createCloseButton();
 
@@ -357,7 +362,7 @@ __Profiler.prototype._drawChart = function(canvas) {
     var evt = this.eventsOrder[i];
 
     if (!this.timingData.hasOwnProperty(evt)) {
-      continue;
+``      continue;
     }
 
     var item = this.timingData[evt];
@@ -381,29 +386,11 @@ __Profiler.prototype._drawChart = function(canvas) {
     }
   }
 
-
-  var perfs = window.performance.getEntries();
-  for (i = 0; i < this.customRequestMap.length; i++ ) {
-    var customRequestSetting = this.customRequestMap[i];
-
-    for (var j = 0; j < perfs.length; j++ ) {
-      var perf = perfs[j];
-
-      if (customRequestSetting.match.test(perf.name)) {
-
-        var item = { time : Math.round(perf.startTime), sectionIndex: 3, label : customRequestSetting.name, timeEnd : Math.round(perf.responseEnd), custom : true};
-
-        drawFns.push(this._prepareDraw(canvas, 'block', item));
-
-        this.customEvents.push(item);
-      }
-    }
-
-
-
+  for (i = 0; i < this.customEvents.length; i++) {
+    drawFns.push(this._prepareDraw(canvas, 'block', this.customEvents[i]));
   }
 
-    
+
   canvas.height = this.spacing * this.barHeight * drawFns.length;
 
   // setting canvas height resets font, has to be re-set
@@ -415,7 +402,7 @@ __Profiler.prototype._drawChart = function(canvas) {
     draw.call(this, context);
     context.translate(0, step);
   }, this);
-}
+};
 
 /**
  * Matches events with the section they belong to
@@ -495,15 +482,52 @@ __Profiler.prototype._getData = function() {
   }
 
   this.totalTime = totalTime;
-    
+
   return events;
-}
+};
+
+__Profiler.prototype._getCustomEvents = function() {
+  var customEvents = [];
+  var perfs = window.performance.getEntries();
+  for (i = 0; i < this.customRequestMap.length; i++) {
+    var customRequestSetting = this.customRequestMap[i];
+
+    for (var j = 0; j < perfs.length; j++) {
+      var perf = perfs[j];
+
+      if (customRequestSetting.match.test(perf.name)) {
+        var sections = this._getSections();
+        if (typeof sections[3].startTime === "undefined") sections[3].startTime = perf.startTime;
+        else
+          sections[3].startTime = Math.min(sections[3].startTime, perf.startTime);
+        if (typeof sections[3].endTime === "undefined")
+          sections[3].endTime = perf.responseEnd
+        else
+          sections[3].endTime = Math.max(sections[3].endTime, perf.responseEnd);
+
+        this.totalTime = Math.max(this.totalTime, perf.responseEnd);
+
+        var item = {
+          time: Math.round(perf.startTime),
+          sectionIndex: 3,
+          label: customRequestSetting.name,
+          timeEnd: Math.round(perf.responseEnd),
+          custom: true
+        };
+
+        customEvents.push(item);
+      }
+    }
+  }
+  return customEvents;
+};
 
 /**
  * Actually init the chart
  */
 __Profiler.prototype._init = function() {
   this.timingData = this._getData();
+  this.customEvents = this._getCustomEvents();
   this.sections = this._getSections();
   this.container = this._createContainer();
 
