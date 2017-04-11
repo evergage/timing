@@ -39,9 +39,10 @@ __Profiler.prototype.eventsOrder = [
 ];
 
 __Profiler.prototype.customRequestMap = [
-  {name : "Evergage Beacon", match : /\/evergage(Small)?.(min|src)\.js$/ },
-  {name : "Evergage Action", match : /\/twreceiver\?.*\&action\=([^&]*)/ },
-  //{name : "Evergage Request", match : /\/twreceiver\?.*/ },
+  {name : "Evergage Beacon", match : /\/evergage(Small)?.(min\.)?js$/ },
+  {name : "Evergage Page", match : /\/twreceiver\?.*&\.pv.*/, doesNotInclude: "&action=" },
+  {name : "Evergage Page", match : /\/twreceiver\?.*(?:\&action=([^&]*)).*&\.pv.*/ },
+  {name : "Evergage Action", match : /\/twreceiver\?.*(?:\&action=([^&]*)).*/, doesNotInclude: "&.pv=" },
   {name : "Evergage Ping", match : /\/pr\?/ },
   {name : "Evergage Message Stat", match : /\/msreceiver\?/ }
 ];
@@ -496,11 +497,13 @@ __Profiler.prototype._getCustomEvents = function() {
     for (var j = 0; j < perfs.length; j++) {
       var perf = perfs[j];
 
-      if (customRequestSetting.match.test(perf.name)) {
+      if (customRequestSetting.match.test(perf.name)
+          && (customRequestSetting.doesNotInclude == null
+              || perf.name.indexOf(customRequestSetting.doesNotInclude) === -1)) {
         var name = customRequestSetting.name;
         var groups = customRequestSetting.match.exec(perf.name)
         if (groups.length >= 1 && typeof groups[1] != "undefined")
-          name += " (" + window.decodeURIComponent(groups[1]) + ")";
+          name += " (" + window.decodeURIComponent(groups[1].replace(/\+/g, "%20")) + ")";
         var sections = this._getSections();
         if (typeof sections[3].startTime === "undefined") sections[3].startTime = perf.startTime;
         else
